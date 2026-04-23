@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For You 💌</title>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Sniglet&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: linear-gradient(135deg, #ffe6ea, #ffeff1);
+            font-family: 'Sniglet', cursive;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #333;
+            perspective: 2000px;
+        }
+
+        /* --- DEKORASI AWAN ACAK & BANYAK --- */
+        .bg-elements { position: absolute; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .cloud { position: absolute; background: white; border-radius: 50px; opacity: 0.6; filter: blur(1px); }
+        .cloud::before, .cloud::after { content: ''; position: absolute; background: white; border-radius: 50%; }
+        
+        /* Ukuran base awan */
+        .size-s { width: 60px; height: 20px; } .size-s::before { width: 30px; height: 30px; top: -15px; left: 10px; } .size-s::after { width: 25px; height: 25px; top: -10px; left: 30px; }
+        .size-m { width: 100px; height: 30px; } .size-m::before { width: 50px; height: 50px; top: -25px; left: 15px; } .size-m::after { width: 40px; height: 40px; top: -15px; left: 50px; }
+        .size-l { width: 140px; height: 40px; } .size-l::before { width: 70px; height: 70px; top: -35px; left: 20px; } .size-l::after { width: 60px; height: 60px; top: -25px; left: 70px; }
+
+        /* Animasi ngacak kanan kiri */
+        @keyframes driftRight { 0% { transform: translateX(-15vw); } 100% { transform: translateX(115vw); } }
+        @keyframes driftLeft { 0% { transform: translateX(115vw); } 100% { transform: translateX(-15vw); } }
+
+        /* Setup 15 Awan */
+        .c1 { top: 5%; left: -10vw; animation: driftRight 25s linear infinite; }
+        .c2 { top: 15%; right: -10vw; animation: driftLeft 35s linear infinite 2s; opacity: 0.4; }
+        .c3 { top: 25%; left: -20vw; animation: driftRight 40s linear infinite 5s; }
+        .c4 { top: 35%; right: -15vw; animation: driftLeft 28s linear infinite 1s; }
+        .c5 { top: 45%; left: -10vw; animation: driftRight 22s linear infinite 8s; opacity: 0.5; }
+        .c6 { top: 55%; right: -20vw; animation: driftLeft 45s linear infinite; }
+        .c7 { top: 65%; left: -15vw; animation: driftRight 30s linear infinite 4s; }
+        .c8 { top: 75%; right: -10vw; animation: driftLeft 20s linear infinite 7s; opacity: 0.7; }
+        .c9 { top: 85%; left: -25vw; animation: driftRight 38s linear infinite 3s; }
+        .c10 { top: 10%; left: 30vw; animation: driftRight 40s linear infinite; opacity: 0.3; }
+        .c11 { top: 30%; left: 70vw; animation: driftLeft 32s linear infinite; }
+        .c12 { top: 50%; left: 40vw; animation: driftRight 26s linear infinite; opacity: 0.4; }
+        .c13 { top: 70%; left: 80vw; animation: driftLeft 42s linear infinite; }
+        .c14 { top: 90%; left: 20vw; animation: driftRight 34s linear infinite; opacity: 0.5; }
+        .c15 { top: 20%; left: 50vw; animation: driftLeft 24s linear infinite; }
+
+        #transition-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #fffcfd; z-index: 9998; opacity: 0; pointer-events: none;
+            transition: opacity 0.8s ease-in;
+        }
+        #transition-overlay.active { opacity: 1; }
+
+        /* --- SCENE 1: AMPLOP 3D --- */
+        #scene-envelope { display: flex; flex-direction: column; align-items: center; z-index: 10; width: 100%; position: relative;}
+
+        .header-text { font-family: 'Caveat', cursive; font-size: 38px; color: #ff6b81; margin-bottom: 30px; text-shadow: 2px 2px 0px rgba(255,255,255,0.8); animation: bounceText 2s infinite alternate; }
+        @keyframes bounceText { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
+
+        .env-wrapper { position: relative; width: 280px; height: 180px; cursor: pointer; transform-style: preserve-3d; animation: floatEnv3D 4s ease-in-out infinite alternate; }
+        @keyframes floatEnv3D { 0% { transform: translateY(0) rotateX(0deg) rotateY(-5deg) rotateZ(1deg); } 100% { transform: translateY(-20px) rotateX(5deg) rotateY(5deg) rotateZ(-1deg); } }
+
+        .env-back { position: absolute; width: 100%; height: 100%; background: linear-gradient(135deg, #ffc4d0, #ffb3c1); border-radius: 10px; box-shadow: 0 20px 50px rgba(255, 107, 129, 0.4); z-index: 1; }
+        
+        .env-paper-container { position: absolute; bottom: 10px; left: 15px; width: 250px; height: 160px; z-index: 2; transform-style: preserve-3d; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .env-paper { position: absolute; width: 100%; height: 100%; background: #fff; border-radius: 8px; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; color: #ffb6c1; font-size: 40px; backface-visibility: hidden; transition: opacity 0.3s; }
+
+        .env-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 120px; background: linear-gradient(to top, #ffaebb, #ffc4d0); clip-path: polygon(0 100%, 50% 0, 100% 100%); z-index: 4; }
+        .env-left { position: absolute; bottom: 0; left: 0; width: 150px; height: 180px; background: linear-gradient(to right, #ffb3c1, #ffc4d0); clip-path: polygon(0 0, 100% 50%, 0 100%); z-index: 3; }
+        .env-right { position: absolute; bottom: 0; right: 0; width: 150px; height: 180px; background: linear-gradient(to left, #ffb3c1, #ffc4d0); clip-path: polygon(100% 0, 0 50%, 100% 100%); z-index: 3; }
+        .env-flap { position: absolute; top: 0; left: 0; width: 100%; height: 120px; background: linear-gradient(to bottom, #ffb3c1, #ff9eb5); clip-path: polygon(0 0, 100% 0, 50% 100%); transform-origin: top; transition: transform 0.6s ease; z-index: 5; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1)); }
+        .env-seal { position: absolute; top: 110px; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: #ff4757; border-radius: 50%; z-index: 6; box-shadow: 0 4px 8px rgba(255, 71, 87, 0.4); display: flex; justify-content: center; align-items: center; color: white; transition: opacity 0.3s; }
+
+        .env-wrapper.open { animation: none; transform: translateY(30px) rotateX(10deg); }
+        .env-wrapper.open .env-flap { transform: rotateX(180deg); z-index: 1; }
+        .env-wrapper.open .env-seal { opacity: 0; }
+        .env-wrapper.pull-paper .env-paper-container { transform: translateY(-130px) translateZ(20px); }
+        .env-wrapper.morph-paper .env-paper-container { transform: translateY(-130px) translateZ(20px) rotateY(180deg) scale(0.2); opacity: 0; transition: transform 0.6s ease-in, opacity 0.4s ease-in 0.2s; }
+
+        /* --- PESAWAT KERTAS MANUVER PIXAR --- */
+        #paper-plane-container {
+            position: absolute; top: 50%; left: 50%; width: 120px; height: 120px;
+            margin-top: -150px; margin-left: -60px; z-index: 9999; pointer-events: none; 
+            transform-style: preserve-3d; opacity: 0; transform: scale(0.2) rotateY(-180deg);
+            transition: opacity 0.4s, transform 0.6s ease-out;
+        }
+
+        #paper-plane-container.morph-in { opacity: 1; transform: scale(1) rotateY(0deg) rotateZ(-15deg); }
+
+        #paper-plane { width: 100%; height: 100%; fill: #fffdf8; stroke: #2c3e50; stroke-width: 2; stroke-linejoin: round; filter: drop-shadow(0 15px 15px rgba(0,0,0,0.2)); transform-origin: center; }
+
+        /* Animasi Mutar dan Nembrak Kamera */
+        .fly-3d-anim { animation: flyPlanePixar 3.5s cubic-bezier(0.42, 0, 0.58, 1) forwards; }
+
+        @keyframes flyPlanePixar {
+            0% { transform: scale(1) translateZ(0) rotateX(0deg) rotateY(0deg) rotateZ(-15deg); }
+            20% { transform: translate(-150px, -50px) translateZ(150px) rotateX(20deg) rotateY(-30deg) rotateZ(10deg); } /* Belok Kiri */
+            45% { transform: translate(100px, -150px) translateZ(300px) rotateX(-10deg) rotateY(40deg) rotateZ(-40deg); } /* Belok Kanan Naik */
+            65% { transform: translate(0px, 50px) translateZ(500px) rotateX(30deg) rotateY(0deg) rotateZ(360deg); } /* Barrel Roll Tengah */
+            90% { transform: translate(0, 0) translateZ(2500px) rotateX(-15deg) rotateY(0deg) rotateZ(720deg); opacity: 1; } /* Nembrak Kamera */
+            100% { transform: translate(0, 0) translateZ(3500px) rotateX(-15deg) rotateY(0deg) rotateZ(720deg); opacity: 0; } /* Hilang Tembus */
+        }
+
+        .flight-trail { position: absolute; color: rgba(44, 62, 80, 0.7); font-size: 26px; font-family: Arial, sans-serif; font-weight: bold; pointer-events: none; z-index: 9998; transform-origin: center; animation: fadeTrail 0.8s forwards; }
+        @keyframes fadeTrail { 0% { opacity: 1; transform: scale(1) translateZ(0); } 100% { opacity: 0; transform: scale(0.3) translateZ(-150px); } }
+
+        /* --- SCENE 2: KERTAS MEMBACA --- */
+        #scene-reading { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: #fdfbfb; background-image: radial-gradient(#ffd1dc 1.5px, transparent 1.5px), radial-gradient(#ffd1dc 1.5px, transparent 1.5px); background-size: 30px 30px; background-position: 0 0, 15px 15px; z-index: 1000; display: none; padding: 20px; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; }
+
+        .paper-container { position: relative; width: 100%; max-width: 380px; margin-top: 10px; background: #fff9f0; border: 1px dashed #d4bf9f; border-radius: 8px; padding: 35px 25px; z-index: 10; box-shadow: 2px 5px 20px rgba(0,0,0,0.08); }
+        .washi-tape { position: absolute; top: -15px; left: 50%; transform: translateX(-50%) rotate(-2deg); width: 120px; height: 30px; background: rgba(255, 182, 193, 0.6); border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 20; backdrop-filter: blur(2px); border: 1px solid rgba(255,255,255,0.5); }
+        .washi-tape::after { content: ''; position: absolute; right: -5px; top: 0; width: 10px; height: 100%; background: inherit; clip-path: polygon(0 0, 100% 20%, 0 40%, 100% 60%, 0 80%, 100% 100%); }
+        .washi-tape::before { content: ''; position: absolute; left: -5px; top: 0; width: 10px; height: 100%; background: inherit; clip-path: polygon(100% 0, 0 20%, 100% 40%, 0 60%, 100% 80%, 0 100%); }
+
+        /* Fix Keterbacaan Text */
+        .typewriter-text { 
+            font-family: 'Caveat', cursive; font-size: 28px; color: #2c3e50; line-height: 1.6; position: relative; z-index: 100; 
+            font-weight: bold;
+            /* Tambahan efek shadow putih biar teks selalu menonjol ngelewatin foto */
+            text-shadow: 0px 0px 8px rgba(255, 255, 255, 1), 0px 0px 15px rgba(255, 255, 255, 1), 0px 0px 20px rgba(255, 255, 255, 0.8);
+        }
+        .cursor { display: inline-block; width: 3px; height: 24px; background: #ff6b81; animation: blink 0.7s infinite; }
+
+        /* FOTO POLAROID OPACITY DITURUNIN */
+        .photo-deco { position: absolute; width: 130px; height: 145px; background: white; padding: 8px; padding-bottom: 30px; border-radius: 2px; box-shadow: 2px 8px 15px rgba(0,0,0,0.15); opacity: 0; transform: scale(0.5); transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 5; }
+        .photo-deco img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.2) contrast(1.1); }
+        .photo-deco span { position: absolute; bottom: 5px; left: 0; width: 100%; text-align: center; font-family: 'Caveat', cursive; font-size: 18px; color: #666; }
+        
+        .p1 { top: 10px; right: -25px; transform: rotate(15deg) scale(0.5); }
+        .p2 { top: 40%; left: -30px; transform: rotate(-15deg) scale(0.5); }
+        .p3 { bottom: -15px; right: -15px; transform: rotate(8deg) scale(0.5); }
+
+        /* Opacity diturunin jadi 0.3 biar teks kebaca jelas */
+        .photo-deco.show-p1 { opacity: 0.3; transform: rotate(15deg) scale(1); }
+        .photo-deco.show-p2 { opacity: 0.3; transform: rotate(-15deg) scale(1); }
+        .photo-deco.show-p3 { opacity: 0.3; transform: rotate(8deg) scale(1); }
+
+        .btn-ready { margin-top: 40px; background: linear-gradient(to right, #ff758c, #ff7eb3); color: white; border: none; padding: 15px 35px; border-radius: 30px; font-family: 'Sniglet', cursive; font-size: 18px; box-shadow: 0 8px 20px rgba(255, 117, 140, 0.4); cursor: pointer; opacity: 0; transform: translateY(20px); transition: all 0.5s; z-index: 30; display: block; margin-left: auto; margin-right: auto; }
+        .btn-ready.show { opacity: 1; transform: translateY(0); }
+
+        /* --- SCENE 3 & 4: GAME --- */
+        #scene-countdown { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 252, 253, 0.95); z-index: 2000; display: none; justify-content: center; align-items: center; }
+        .count-number { font-size: 150px; color: #ff6b81; font-family: 'Sniglet', cursive; animation: popCount 1s ease-in-out; }
+        #scene-game { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #e0f7fa; z-index: 1500; display: none; flex-direction: column; align-items: center; overflow: hidden; }
+        .game-title { font-family: 'Caveat', cursive; font-size: 35px; color: #00838f; margin-top: 20px; }
+        #game-board { position: relative; width: 300px; height: 420px; background: #607d8b; border: 5px solid #fff; border-radius: 15px; box-shadow: 0 15px 25px rgba(0,0,0,0.1); margin-top: 15px; overflow: hidden; }
+        .road-line { position: absolute; left: 50%; width: 6px; height: 100%; background: repeating-linear-gradient(to bottom, transparent 0, transparent 20px, #fff 20px, #fff 40px); transform: translateX(-50%); animation: roadScroll 1.5s linear infinite; }
+        @keyframes roadScroll { from { background-position: 0 -40px; } to { background-position: 0 0; } }
+        #player-car { position: absolute; bottom: 20px; left: 125px; width: 50px; height: 50px; font-size: 45px; display: flex; justify-content: center; align-items: center; z-index: 10; transition: left 0.1s; }
+        .obstacle-gif { position: absolute; top: -60px; width: 50px; height: 100px; object-fit: contain; z-index: 5; }
+        .controls { display: flex; gap: 40px; margin-top: 20px; }
+        .ctrl-btn { width: 70px; height: 70px; border-radius: 50%; background: white; border: 4px solid #00bcd4; font-size: 30px; color: #00bcd4; display: flex; justify-content: center; align-items: center; box-shadow: 0 8px 0 #0097a7; cursor: pointer; user-select: none; z-index: 100;}
+        .ctrl-btn:active { transform: translateY(8px); box-shadow: 0 0 0 #0097a7; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .popup-box { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 85%; max-width: 350px; animation: slideUp 0.4s; border: 4px solid #ffb6c1; }
+        .popup-box h2 { font-family: 'Caveat', cursive; color: #ff4757; font-size: 35px; margin-bottom: 10px; }
+        .popup-box p { color: #555; margin-bottom: 25px; line-height: 1.5; font-family: 'Sniglet', cursive;}
+        .btn-action { background: #ff4757; color: white; border: none; padding: 15px; border-radius: 20px; font-size: 16px; font-family: 'Sniglet', cursive; width: 100%; cursor: pointer; box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <audio id="gameAudio" src="game-bgm.mp3" loop></audio>
+
+    <div class="bg-elements">
+        <div class="cloud size-m c1"></div><div class="cloud size-s c2"></div><div class="cloud size-l c3"></div>
+        <div class="cloud size-m c4"></div><div class="cloud size-s c5"></div><div class="cloud size-l c6"></div>
+        <div class="cloud size-m c7"></div><div class="cloud size-s c8"></div><div class="cloud size-l c9"></div>
+        <div class="cloud size-m c10"></div><div class="cloud size-s c11"></div><div class="cloud size-l c12"></div>
+        <div class="cloud size-m c13"></div><div class="cloud size-s c14"></div><div class="cloud size-l c15"></div>
+    </div>
+
+    <div id="transition-overlay"></div>
+
+    <div id="paper-plane-container">
+        <svg id="paper-plane" viewBox="0 0 24 24">
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+        </svg>
+    </div>
+
+    <div id="scene-envelope">
+        <div class="header-text">Klik amplopnya! 💕</div>
+        <div class="env-wrapper" id="env-wrapper" onclick="startSequence()">
+            <div class="env-back"></div>
+            <div class="env-paper-container" id="env-paper-container"><div class="env-paper">❤</div></div>
+            <div class="env-left"></div><div class="env-right"></div><div class="env-bottom"></div>
+            <div class="env-flap"></div><div class="env-seal">❤</div>
+        </div>
+    </div>
+
+    <div id="scene-reading">
+        <div class="paper-container">
+            <div class="washi-tape"></div>
+            <div class="photo-deco p1" id="foto1"><img src="https://picsum.photos/200/200?random=1" alt="Foto 1"><span>Memories</span></div>
+            <div class="photo-deco p2" id="foto2"><img src="https://picsum.photos/200/200?random=2" alt="Foto 2"><span>Us</span></div>
+            <div class="photo-deco p3" id="foto3"><img src="https://picsum.photos/200/200?random=3" alt="Foto 3"><span>❤️</span></div>
+            
+            <div class="typewriter-text"><span id="typed-text"></span><span class="cursor"></span></div>
+        </div>
+        <button class="btn-ready" id="btn-play" onclick="startCountdown()">Main Game Buat Baikan 🎮</button>
+    </div>
+
+    <div id="scene-countdown"><div class="count-number" id="count-display">3</div></div>
+    
+    <div id="scene-game">
+        <div class="game-title">Awas Nabrak! 🚗💨</div>
+        <div style="background: white; padding: 5px 15px; border-radius: 20px; color: #00838f;">Attempt: <span id="attempt-text">1</span> / 3</div>
+        <div id="game-board"><div class="road-line"></div><div id="player-car">🚗</div></div>
+        <div class="controls">
+            <div class="ctrl-btn" onmousedown="moveCar(-1)" onmouseup="stopCar()" ontouchstart="moveCar(-1)" ontouchend="stopCar()">◀</div>
+            <div class="ctrl-btn" onmousedown="moveCar(1)" onmouseup="stopCar()" ontouchstart="moveCar(1)" ontouchend="stopCar()">▶</div>
+        </div>
+    </div>
+
+    <div class="overlay" id="loss-overlay">
+        <div class="popup-box">
+            <div style="font-size: 50px; margin-bottom: 10px;" id="pop-emoji">💥</div>
+            <h2 id="pop-title">Yahh Nabrak!</h2>
+            <p id="pop-desc">Kalah deh. Yaudah sesuai perjanjian, karena kalah kita baikan ya! hehe 😝</p>
+            <button class="btn-action" id="btn-next" onclick="resetGame()">Coba Lagi Dong</button>
+            <button class="btn-action hidden" id="btn-wa" onclick="goToWA()">Chat Aku Sekarang ❤️</button>
+        </div>
+    </div>
+
+    <script>
+        let seqStarted = false;
+        function startSequence() {
+            if(seqStarted) return;
+            seqStarted = true;
+
+            const env = document.getElementById('env-wrapper');
+            const planeCont = document.getElementById('paper-plane-container');
+            const overlay = document.getElementById('transition-overlay');
+            
+            env.classList.add('open');
+            setTimeout(() => env.classList.add('pull-paper'), 500);
+
+            setTimeout(() => {
+                env.classList.add('morph-paper');
+                setTimeout(() => planeCont.classList.add('morph-in'), 300); 
+            }, 1400);
+
+            setTimeout(() => {
+                planeCont.classList.add('fly-3d-anim');
+                createFlightTrail();
+
+                setTimeout(() => overlay.classList.add('active'), 2500);
+
+                setTimeout(() => {
+                    document.getElementById('scene-envelope').style.display = 'none';
+                    planeCont.style.display = 'none';
+                    document.getElementById('scene-reading').style.display = 'flex';
+                    setTimeout(()=> overlay.style.display = 'none', 500);
+                    startTypewriter();
+                }, 3500); 
+            }, 2000);
+        }
+
+        function createFlightTrail() {
+            const plane = document.getElementById('paper-plane-container');
+            let trailInterval = setInterval(() => {
+                let rect = plane.getBoundingClientRect();
+                if(rect.width === 0) return;
+                
+                let dash = document.createElement('div');
+                dash.className = 'flight-trail';
+                dash.innerText = '-';
+                
+                dash.style.left = (rect.left + rect.width / 2) + 'px';
+                dash.style.top = (rect.top + rect.height / 2) + 'px';
+                
+                let rotation = Math.random() * 40 - 20;
+                dash.style.transform = `rotate(${rotation}deg)`;
+                
+                document.body.appendChild(dash);
+                setTimeout(() => dash.remove(), 800);
+            }, 50); 
+
+            setTimeout(() => clearInterval(trailInterval), 3200);
+        }
+
+        const message = "Hai sayangku...\n\nMaafin aku yaa, aku sadar aku salah dan suka bikin kamu bete. Aku nyesel banget beneran. 🥺\n\nJangan ngambek lagi dong cantik. Biar seru, aku buatin mini-game nih buat kamu. Kalo kamu kalah, kita baikan ya! Deal? 😘";
+        let textIndex = 0;
+        const tr1 = Math.floor(message.length * 0.2), tr2 = Math.floor(message.length * 0.5), tr3 = Math.floor(message.length * 0.8); 
+
+        function startTypewriter() {
+            const textContainer = document.getElementById('typed-text');
+            function type() {
+                if (textIndex < message.length) {
+                    let char = message.charAt(textIndex);
+                    textContainer.innerHTML += (char === '\n') ? '<br>' : char;
+                    textIndex++;
+                    
+                    if (textIndex === tr1) document.getElementById('foto1').classList.add('show-p1');
+                    if (textIndex === tr2) document.getElementById('foto2').classList.add('show-p2');
+                    if (textIndex === tr3) document.getElementById('foto3').classList.add('show-p3');
+
+                    setTimeout(type, Math.random() * 40 + 40);
+                } else {
+                    setTimeout(() => document.getElementById('btn-play').classList.add('show'), 800);
+                }
+            }
+            setTimeout(type, 800);
+        }
+
+        function startCountdown() {
+            // MUSIK NYALA DI SINI BRO! Langsung play pas klik tombol main
+            const audioBgm = document.getElementById('gameAudio');
+            audioBgm.play().catch(e => console.log("Audio autoplay dicegah browser, harus interaksi dulu"));
+
+            document.getElementById('scene-reading').style.display = 'none';
+            const screenCount = document.getElementById('scene-countdown');
+            const display = document.getElementById('count-display');
+            screenCount.style.display = 'flex';
+
+            let count = 3; display.innerText = count;
+            let interval = setInterval(() => {
+                count--;
+                if(count > 0) {
+                    display.style.animation = 'none'; void display.offsetWidth;
+                    display.innerText = count; display.style.animation = 'popCount 1s ease-in-out';
+                } else if(count === 0) { display.innerText = "GO!"; } 
+                else {
+                    clearInterval(interval); screenCount.style.display = 'none';
+                    document.getElementById('scene-game').style.display = 'flex'; initGame();
+                }
+            }, 1000);
+        }
+
+        const board = document.getElementById('game-board'), carEl = document.getElementById('player-car');
+        let attempts = 0, gameActive = false, loopId, carX = 125, carDx = 0, obstacles = [], frames = 0, waveCount = 1;
+        const GIF_RINTANGAN_URL = "rintangan.gif"; 
+
+        function initGame() {
+            // Pemanggilan audio udah dihapus dari sini, jadi cuma ngurusin state gamenya aja
+            carX = 125; carEl.style.left = carX + 'px';
+            document.querySelectorAll('.obstacle-gif').forEach(el => el.remove());
+            obstacles = []; frames = 0; waveCount = 1; gameActive = true;
+            document.getElementById('attempt-text').innerText = attempts + 1;
+            gameLoop();
+        }
+
+        function moveCar(dir) { if(!gameActive) return; carDx = dir * 5; } 
+        function stopCar() { carDx = 0; }
+        document.addEventListener('touchmove', (e) => { if(gameActive) e.preventDefault(); }, { passive: false });
+
+        function spawnWave(count) {
+            const lanes = [0, 50, 100, 150, 200, 250];
+            lanes.sort(() => Math.random() - 0.5);
+            for(let i=0; i<count; i++) {
+                const obsEl = document.createElement('img');
+                obsEl.className = 'obstacle-gif'; obsEl.src = GIF_RINTANGAN_URL; 
+                obsEl.style.left = lanes[i] + 'px'; obsEl.style.top = '-60px';
+                board.appendChild(obsEl); obstacles.push({ el: obsEl, y: -60, speed: 3.5 }); 
+            }
+        }
+
+        function gameLoop() {
+            if(!gameActive) return;
+            carX += carDx;
+            if (carX < 0) carX = 0; if (carX > 250) carX = 250; 
+            carEl.style.left = carX + 'px';
+            frames++;
+            if (frames % 180 === 0 && waveCount <= 6) { spawnWave(waveCount); waveCount++; }
+            for (let i = 0; i < obstacles.length; i++) {
+                let obs = obstacles[i];
+                obs.y += obs.speed; obs.el.style.top = obs.y + 'px';
+                let cRect = carEl.getBoundingClientRect(), oRect = obs.el.getBoundingClientRect(), margin = 5; 
+                if (cRect.left + margin < oRect.right - margin && cRect.right - margin > oRect.left + margin && cRect.top + margin < oRect.bottom - margin && cRect.bottom - margin > oRect.top + margin) {
+                    gameOver(); return; 
+                }
+                if (obs.y > 450) { obs.el.remove(); obstacles.splice(i, 1); i--; }
+            }
+            loopId = requestAnimationFrame(gameLoop);
+        }
+
+        function gameOver() {
+            gameActive = false; cancelAnimationFrame(loopId); attempts++;
+            
+            // Audio tetep di-pause pas nabrak
+            document.getElementById('gameAudio').pause();
+
+            document.getElementById('loss-overlay').style.display = 'flex';
+            const t = document.getElementById('pop-title'), d = document.getElementById('pop-desc'), e = document.getElementById('pop-emoji');
+            if (attempts === 1) { e.innerText = "💥"; t.innerText = "Yahh Nabrak!"; d.innerText = "Aduh, nabrak rintangan! Sesuai janji, karena kalah kita baikan ya! hehe 😝"; } 
+            else if (attempts === 2) { e.innerText = "🙈"; t.innerText = "Kena Lagi Deh!"; d.innerText = "Makin rame rintangannya ya? Sengaja dibikin susah biar cepet baikan sama aku ❤️"; } 
+            else { e.innerText = "🎉"; t.innerText = "Udah 3x Kalah!"; d.innerText = "Tuh kan kalah mulu! Deal ya kita baikan? Gak nerima penolakan! Chat aku sekarang dongg 🥺";
+                document.getElementById('btn-next').classList.add('hidden'); document.getElementById('btn-wa').classList.remove('hidden'); }
+        }
+        function resetGame() { document.getElementById('loss-overlay').style.display = 'none'; startCountdown(); }
+        function goToWA() { window.location.href = `https://wa.me/6281234567890?text=${encodeURIComponent("Iyaa sayang, aku maafin kok. Kita baikan yaaa ❤️")}`; }
+    </script>
+</body>
+</html>
